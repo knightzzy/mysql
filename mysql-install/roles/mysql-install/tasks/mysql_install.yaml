@@ -1,0 +1,62 @@
+---
+- name: 'create MySQL path'
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0755
+  with_items:
+    - /data1/mysql/data
+    - /data1/mysql-binlog
+    - /data1/mysql-slowlog
+
+- name: 'create mysql groups'
+  group:
+    name: mysql
+    state: present
+
+- name: 'create mysql user'
+  user:
+    name: mysql
+    group: mysql
+    system: yes
+
+- name: 'MySQL grant access'
+  file:
+    path: /data1
+    owner: mysql
+    group: mysql
+    recurse: yes
+    state: directory
+
+
+- name: "Create a directory in /root/"
+  become: yes
+  file:
+    path: /root/mysql-5.7.30-1.el7.x86_64.rpm-bundle
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+
+
+- name: "Copy mysql package"
+  unarchive:
+    src: "mysql-5.7.30-1.el7.x86_64.rpm-bundle.tar"
+    dest: "/root/mysql-5.7.30-1.el7.x86_64.rpm-bundle/"
+    owner: root
+    group: root
+    mode: 0755
+
+- name: "Update mysql config"
+  shell: "echo > /etc/my.cnf"
+
+- name: 'update mysql config'
+  template:
+    src: "my.cnf"
+    dest: "/etc/my.cnf"
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: "Install mysql rpm"
+  shell: "cd /root/mysql-5.7.30-1.el7.x86_64.rpm-bundle/ && rpm -Uvh *.rpm --nodeps --force"

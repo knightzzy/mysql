@@ -1,0 +1,34 @@
+---
+- name: "start mysqld "
+  systemd:
+    name: mysqld
+    state: started
+
+- name: "enable mysqld "
+  systemd:
+    name: mysqld
+    enabled: yes
+
+- name: "grep MySQL temporary password"
+  shell: grep 'temporary password' /var/log/mysqld.log | awk '{print $NF}'
+  register: grep_output
+  changed_when: false
+  ignore_errors: yes
+
+- name: "find the temporary password"
+  debug:
+    var: grep_output.stdout
+
+- name: "copy change_mysql_password.sh to vms"
+  become: yes
+  copy:
+    src: change_mysql_password.sh
+    dest: /root/mysql-5.7.30-1.el7.x86_64.rpm-bundle/change_mysql_password.sh
+    owner: root
+    group: root
+    mode: '0755'
+
+
+- name: "alter MySQL root credentials"
+  script: /root/mysql-5.7.30-1.el7.x86_64.rpm-bundle/change_mysql_password.sh "{{ grep_output.stdout }}"
+  become: yes

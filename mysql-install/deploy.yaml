@@ -1,0 +1,6 @@
+---
+
+- hosts: mysql
+  roles:
+    - {role: mysql-install}
+  become: yes
